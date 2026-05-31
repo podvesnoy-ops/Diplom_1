@@ -15,7 +15,6 @@ public class TestData {
 
     //Компонентоы
     public static final String NAME_BUN_OAT = "oat bran bun";
-    public static final String NAME_BUN_SPROUT = "sprouted grain bun";
     public static final String NAME_SAUCE_ZESTY = "zesty lime drizzle";
     public static final String NAME_FILL_BISON = "bison patty";
     public static final String NAME_FILL_MANGO = "caramelized mango slice";
@@ -26,15 +25,10 @@ public class TestData {
 
     //Настройки
     public static final float FLOAT_DELTA = 0.01f; // Допустимая погрешность для сравнения float
-    public static final String RECEIPT_FORMAT = "(==== %s ====)%n= %s %s =%n(==== %s ====)%n%nPrice: %f%n";
 
     //Методы для булок
     public static Bun createBasicBun() {
         return new Bun(NAME_BUN_OAT, PRICE_BUN_BASIC);
-    }
-
-    public static Bun createDeluxeBun() {
-        return new Bun(NAME_BUN_SPROUT, PRICE_BUN_DELUXE);
     }
 
     public static Bun createBun(String name, float price) {

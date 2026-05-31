@@ -4,11 +4,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.assertj.core.api.SoftAssertions;
 import java.util.Arrays;
 import java.util.List;
-import static org.junit.Assert.assertEquals;
 
-// Проверка различных вариантов перемещения ингредиентов
+//Перемещение ингредиентов
 @RunWith(Parameterized.class)
 public class BurgerMoveParameterizedTest {
 
@@ -27,11 +27,11 @@ public class BurgerMoveParameterizedTest {
 
     @Before
     public void setUp() {
-        // Создаем бургер
+        // Создаем бургер с начальным набором ингредиентов
         burger = TestData.createBurgerWithIngredients(TestData.createBasicBun(), initial);
     }
 
-    //Набор данных для перемещения
+    //   * Набор перемещений
     @Parameterized.Parameters(name = "move from {1} to {2} -> {3}")
     public static Iterable<Object[]> scenarios() {
         return Arrays.asList(new Object[][]{
@@ -39,9 +39,9 @@ public class BurgerMoveParameterizedTest {
                 {TestData.LIST_ABC, 2, 0, TestData.LIST_CAB},
                 {TestData.LIST_ABC, 1, 2, TestData.LIST_ACB},
                 {TestData.LIST_ABC, 0, 1, TestData.LIST_BAC},
-                // Перемещение элемента на свою же позицию (список не меняется)
+                // Перемещение элемента на свою же позицию
                 {TestData.LIST_ABC, 1, 1, TestData.LIST_ABC},
-                // Тест для списка из 2 элементов (A, B) -> (B, A)
+                // 2 элемента
                 {Arrays.asList(TestData.MOVE_INGREDIENT_A, TestData.MOVE_INGREDIENT_B), 0, 1,
                         Arrays.asList(TestData.MOVE_INGREDIENT_B, TestData.MOVE_INGREDIENT_A)},
                 {Arrays.asList(TestData.MOVE_INGREDIENT_A, TestData.MOVE_INGREDIENT_B), 1, 0,
@@ -51,14 +51,17 @@ public class BurgerMoveParameterizedTest {
 
     @Test
     public void shouldMoveIngredientCorrectly() {
+        //Перемещение
         burger.moveIngredient(from, to);
-        // Проверяем размер списка
-        assertEquals("Количество ингредиентов после перемещения не должно измениться",
-                initial.size(), burger.ingredients.size());
-        // Проверяем порядок элементов
-        for (int i = 0; i < expected.size(); i++) {
-            assertEquals("Ингредиент на позиции " + i + " должен совпадать с ожидаемым",
-                    expected.get(i), burger.ingredients.get(i));
-        }
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(burger.ingredients)
+                    .as("Размер списка не должен измениться после перемещения")
+                    .hasSize(initial.size());
+
+            softly.assertThat(burger.ingredients)
+                    .as("Порядок ингредиентов должен точно совпадать с ожидаемым")
+                    .containsExactlyElementsOf(expected);
+        });
     }
 }

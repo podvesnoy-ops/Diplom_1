@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import static org.junit.Assert.assertEquals;
 
-//*Тест для проверки корректности расчета цены бургера
+//Тест для проверки корректности расчета цены бургера
 @RunWith(Parameterized.class)
 public class BurgerPriceParameterizedTest {
 
@@ -28,7 +28,7 @@ public class BurgerPriceParameterizedTest {
         burger = new Burger();
     }
 
-    //Набор данных для тестов: цена булки, список цен ингредиентов, ожидаемая  сумма
+    //Набор данных для тестов: цена булки, список цен ингредиентов, ожидаемая сумма
 
     @Parameterized.Parameters(name = "bun={0}, ings={1}, expected={2}")
     public static Iterable<Object[]> priceScenarios() {
