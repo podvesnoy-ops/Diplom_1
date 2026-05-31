@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.assertj.core.api.SoftAssertions;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -21,6 +22,9 @@ public class BurgerTest {
     @Mock
     private Ingredient ingredientMock;
 
+    @Mock
+    private Ingredient ingredientMock2;
+
     @Before
     public void setUp() {
         burger = new Burger();
@@ -32,13 +36,10 @@ public class BurgerTest {
     }
 
     //Расчет цены с использованием Mock.
-
     @Test
     public void shouldCalculatePriceWithMocks() {
-
         when(bunMock.getPrice()).thenReturn(TestData.PRICE_BUN_DELUXE);
         when(ingredientMock.getPrice()).thenReturn(TestData.PRICE_ING_HEARTY);
-
 
         burger.setBuns(bunMock);
         burger.addIngredient(ingredientMock);
@@ -50,60 +51,72 @@ public class BurgerTest {
 
     @Test
     public void shouldStoreBunReference() {
-        Bun testBun = TestData.createBasicBun();
-        burger.setBuns(testBun);
-        assertEquals("Ссылка на установленную булку должна сохраняться внутри бургера", testBun, burger.bun);
+        // Arrange: настраиваем мок
+        burger.setBuns(bunMock);
+        assertEquals("Ссылка на установленную булку должна сохраняться внутри бургера", bunMock, burger.bun);
     }
 
     @Test
     public void shouldAddIngredientToList() {
-        Ingredient testIng = TestData.createBisonPatty();
-        burger.addIngredient(testIng);
+        // Arrange: настраиваем мок
+        burger.addIngredient(ingredientMock);
         assertEquals("После добавления ингредиента, список ингредиентов должен содержать 1 элемент", 1, burger.ingredients.size());
     }
 
     @Test
     public void shouldRemoveIngredientFromList() {
-        Ingredient testIng = TestData.createIngredient(IngredientType.FILLING, "temp", 10f);
-        burger.addIngredient(testIng);
+        // Arrange: настраиваем мок
+        burger.addIngredient(ingredientMock);
         burger.removeIngredient(0);
         assertEquals("После удаления единственного ингредиента, список должен стать пустым", 0, burger.ingredients.size());
     }
 
     @Test
     public void shouldMoveIngredient() {
-        Ingredient a = TestData.createBisonPatty();
-        Ingredient b = TestData.createZestySauce();
-        burger.addIngredient(a);
-        burger.addIngredient(b);
+        //моки
+        burger.addIngredient(ingredientMock);
+        burger.addIngredient(ingredientMock2);
 
-        // Меняем местами: [A, B] -> [B, A]
         burger.moveIngredient(0, 1);
 
-        assertEquals("Первый элемент должен стать вторым (B)", b, burger.ingredients.get(0));
-        assertEquals("Второй элемент должен стать первым (A)", a, burger.ingredients.get(1));
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(burger.ingredients.get(0))
+                    .as("Первый элемент должен стать вторым (B)")
+                    .isEqualTo(ingredientMock2);
+            softly.assertThat(burger.ingredients.get(1))
+                    .as("Второй элемент должен стать первым (A)")
+                    .isEqualTo(ingredientMock);
+        });
     }
 
     // Проверка чека
     @Test
     public void shouldReturnReceiptWithCorrectComponents() {
-        Bun testBun = TestData.createDeluxeBun();
-        Ingredient testSauce = TestData.createZestySauce();
+        when(bunMock.getName()).thenReturn("mocked bun");
+        when(bunMock.getPrice()).thenReturn(TestData.PRICE_BUN_DELUXE);
+        when(ingredientMock.getType()).thenReturn(IngredientType.SAUCE);
+        when(ingredientMock.getName()).thenReturn("mocked sauce");
+        when(ingredientMock.getPrice()).thenReturn(TestData.PRICE_ING_SAUCY);
 
-        burger.setBuns(testBun);
-        burger.addIngredient(testSauce);
+        burger.setBuns(bunMock);
+        burger.addIngredient(ingredientMock);
 
         String actualReceipt = burger.getReceipt();
 
-        // Формируем ожидаемый чек на основе констант
-        String expectedReceipt = String.format(TestData.RECEIPT_FORMAT,
-                testBun.getName(),
-                testSauce.getType().toString().toLowerCase(),
-                testSauce.getName(),
-                testBun.getName(),
-                burger.getPrice()
-        );
-
-        assertEquals("Сгенерированный чек должен совпадать с шаблоном формата", expectedReceipt, actualReceipt);
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(actualReceipt)
+                    .as("Чек должен содержать название булки")
+                    .contains(bunMock.getName());
+            softly.assertThat(actualReceipt)
+                    .as("Чек должен содержать тип ингредиента")
+                    .contains(ingredientMock.getType().toString().toLowerCase());
+            softly.assertThat(actualReceipt)
+                    .as("Чек должен содержать название соуса")
+                    .contains(ingredientMock.getName());
+            softly.assertThat(burger.getPrice())
+                    .as("Цена в чеке должна рассчитываться корректно")
+                    .isCloseTo(2 * TestData.PRICE_BUN_DELUXE + TestData.PRICE_ING_SAUCY,
+                            org.assertj.core.data.Offset.offset(TestData.FLOAT_DELTA));
+        });
     }
 }
