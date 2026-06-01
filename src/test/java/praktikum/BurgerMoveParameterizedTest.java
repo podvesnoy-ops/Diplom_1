@@ -4,48 +4,82 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+//import org.mockito.Mockito;
 import org.assertj.core.api.SoftAssertions;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import static org.mockito.Mockito.*;
 
-//Перемещение ингредиентов
+// Перемещение с моками
+
 @RunWith(Parameterized.class)
 public class BurgerMoveParameterizedTest {
 
     private Burger burger;
-    private final List<Ingredient> initial;
+    private final List<String> initialNames;
     private final int from;
     private final int to;
-    private final List<Ingredient> expected;
+    private final List<String> expectedNames;
 
-    public BurgerMoveParameterizedTest(List<Ingredient> initial, int from, int to, List<Ingredient> expected) {
-        this.initial = initial;
+    public BurgerMoveParameterizedTest(List<String> initialNames, int from, int to, List<String> expectedNames) {
+        this.initialNames = initialNames;
         this.from = from;
         this.to = to;
-        this.expected = expected;
+        this.expectedNames = expectedNames;
     }
 
     @Before
     public void setUp() {
-        // Создаем бургер с начальным набором ингредиентов
-        burger = TestData.createBurgerWithIngredients(TestData.createBasicBun(), initial);
+
+        Map<String, Ingredient> ingredientMocks = new HashMap<>();
+
+        Bun bunMock = mock(Bun.class);
+        when(bunMock.getPrice()).thenReturn(100f);
+
+        // Моки ингредиентов
+        for (String name : initialNames) {
+            if (!ingredientMocks.containsKey(name)) {
+                Ingredient mock = mock(Ingredient.class);
+                when(mock.getName()).thenReturn(name);
+                when(mock.getPrice()).thenReturn(50f);
+                when(mock.getType()).thenReturn(IngredientType.FILLING);
+                ingredientMocks.put(name, mock);
+            }
+        }
+
+        //Моки имён
+        for (String name : expectedNames) {
+            if (!ingredientMocks.containsKey(name)) {
+                Ingredient mock = mock(Ingredient.class);
+                when(mock.getName()).thenReturn(name);
+                when(mock.getPrice()).thenReturn(50f);
+                when(mock.getType()).thenReturn(IngredientType.FILLING);
+                ingredientMocks.put(name, mock);
+            }
+        }
+
+        //Моки - ингредиенты
+        burger = new Burger();
+        burger.setBuns(bunMock);
+        for (String name : initialNames) {
+            burger.addIngredient(ingredientMocks.get(name));
+        }
     }
 
-    //   * Набор перемещений
     @Parameterized.Parameters(name = "move from {1} to {2} -> {3}")
     public static Iterable<Object[]> scenarios() {
         return Arrays.asList(new Object[][]{
-                {TestData.LIST_ABC, 0, 2, TestData.LIST_BCA},
-                {TestData.LIST_ABC, 2, 0, TestData.LIST_CAB},
-                {TestData.LIST_ABC, 1, 2, TestData.LIST_ACB},
-                {TestData.LIST_ABC, 0, 1, TestData.LIST_BAC},
-                // Перемещение элемента на свою же позицию
-                {TestData.LIST_ABC, 1, 1, TestData.LIST_ABC},
+                {Arrays.asList("A", "B", "C"), 0, 2, Arrays.asList("B", "C", "A")},
+                {Arrays.asList("A", "B", "C"), 2, 0, Arrays.asList("C", "A", "B")},
+                {Arrays.asList("A", "B", "C"), 1, 2, Arrays.asList("A", "C", "B")},
+                {Arrays.asList("A", "B", "C"), 0, 1, Arrays.asList("B", "A", "C")},
+                // Перемещение элемента на свою же позицию (список не меняется)
+                {Arrays.asList("A", "B", "C"), 1, 1, Arrays.asList("A", "B", "C")},
                 // 2 элемента
-                {Arrays.asList(TestData.MOVE_INGREDIENT_A, TestData.MOVE_INGREDIENT_B), 0, 1,
-                        Arrays.asList(TestData.MOVE_INGREDIENT_B, TestData.MOVE_INGREDIENT_A)},
-                {Arrays.asList(TestData.MOVE_INGREDIENT_A, TestData.MOVE_INGREDIENT_B), 1, 0,
-                        Arrays.asList(TestData.MOVE_INGREDIENT_B, TestData.MOVE_INGREDIENT_A)},
+                {Arrays.asList("A", "B"), 0, 1, Arrays.asList("B", "A")},
+                {Arrays.asList("A", "B"), 1, 0, Arrays.asList("B", "A")},
         });
     }
 
@@ -54,14 +88,18 @@ public class BurgerMoveParameterizedTest {
         //Перемещение
         burger.moveIngredient(from, to);
 
+        //Проверка
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(burger.ingredients)
                     .as("Размер списка не должен измениться после перемещения")
-                    .hasSize(initial.size());
+                    .hasSize(initialNames.size());
 
-            softly.assertThat(burger.ingredients)
-                    .as("Порядок ингредиентов должен точно совпадать с ожидаемым")
-                    .containsExactlyElementsOf(expected);
+            //Проверяем порядок
+            for (int i = 0; i < expectedNames.size(); i++) {
+                softly.assertThat(burger.ingredients.get(i).getName())
+                        .as("Ингредиент на позиции " + i + " должен совпадать с ожидаемым")
+                        .isEqualTo(expectedNames.get(i));
+            }
         });
     }
 }

@@ -46,6 +46,10 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
+                <configuration>
+                    <!-- новый: Генерировать отчёт в корне проекта, чтобы Git не игнорировал -->
+                    <outputDirectory>${project.basedir}/reports/jacoco</outputDirectory>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
